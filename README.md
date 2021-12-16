@@ -4,7 +4,7 @@ A mock fleet system that uses Kafka topics to communicate and analyzing the stre
 ## Prerequisites
 - Apache Kafka v2.4.x ([kafka_2.11-2.4.1.tgz](https://archive.apache.org/dist/kafka/2.4.1/kafka_2.11-2.4.1.tgz))
 - Apache Spark v2.4.5 ([spark-2.4.5-bin-hadoop2.7.tgz](https://archive.apache.org/dist/spark/spark-2.4.5/spark-2.4.5-bin-hadoop2.7.tgz))
-- Scala v2.11.12
+- Scala v2.11.12 & sbt v1.5.6
 - Python v3.6 or higher
 
 Clone the repository.
