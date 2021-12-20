@@ -101,7 +101,7 @@ class Task:
         self.task = task
         self.priority = random.randint(1,10)
         self.status = "assigned"
-        self.starting_time = time()
+        self.starting_time = (int(time()*1000)%100000)/100
         self.finishing_time = 0
 
     def get_task_obj(task_str: str):

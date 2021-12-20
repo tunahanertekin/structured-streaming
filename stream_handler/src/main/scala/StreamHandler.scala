@@ -17,13 +17,22 @@ case class Task(
 )
 
 object TupleUDFs {
-  import org.apache.spark.sql.functions.udf      
-  // type tag is required, as we have a generic udf
-  import scala.reflect.runtime.universe.{TypeTag, typeTag}
+    import org.apache.spark.sql.functions.udf      
+    import scala.reflect.runtime.universe.{TypeTag, typeTag}
 
-  def toTuple2[S: TypeTag, T: TypeTag] = 
-    udf[(S, T), S, T]((x: S, y: T) => (x, y))
+    def toTuple2[S: TypeTag, T: TypeTag] = 
+        udf[(S, T), S, T]((x: S, y: T) => (x, y))
+
+    def toTuple3[S: TypeTag, T: TypeTag, F: TypeTag] = 
+        udf[(S, T, F), S, T, F]((x: S, y: T, z: F) => (x, y, z))
+
+    def toTuple4[S: TypeTag, T: TypeTag, F: TypeTag, K: TypeTag] = 
+        udf[(S, T, F, K), S, T, F, K]((x: S, y: T, z: F, t: K) => (x, y, z, t))
+
+    def toTuple6[S: TypeTag, T: TypeTag, F: TypeTag, K: TypeTag, M: TypeTag, N: TypeTag] = 
+        udf[(S, T, F, K, M, N), S, T, F, K, M, N]((x: S, y: T, z: F, t: K, a: M, b: N) => (x, y, z, t, a, b))
 }
+
 
 object StreamHandler {
     def main(args: Array[String]){
@@ -57,21 +66,37 @@ object StreamHandler {
                 row(9).toFloat
             ))
 
+        // ----- TASK 1 -----
 
-        // val summaryDf = expandedDF
-		// 	.groupBy("airport")
-		// 	.agg(avg("priority"))
+        // val overallStatusDF = expandedDF
+        //     .filter("status == 'done'")
+        //     .groupBy("airport")
+        //     .agg(avg("priority").as("avgPriority"), avg($"finishingTime"- $"startingTime").as("avgElapsedTime"),  count("*").as("total"))
 
-        // val summaryDf = expandedDF
-        //     .filter("task == 'Go'")
+        // val query = overallStatusDF
+        //     .writeStream
+        //     .outputMode("complete")
+        //     .format("console")
+        //     .start()
 
-        val dfToKafka = expandedDF.withColumn(
-            "value", TupleUDFs.toTuple2[String, String].apply(expandedDF("taskId"), expandedDF("status"))
+
+        // ----- TASK 2 -----
+
+
+        val failedTasksDF = expandedDF
+            .filter("status == 'failed'")
+
+        val query = failedTasksDF
+            .writeStream
+            .outputMode("update")
+            .format("console")
+            .start()
+
+        val failedToKafka = failedTasksDF.withColumn(
+            "value", TupleUDFs.toTuple6[String, String, String, String, String, String].apply($"taskId", $"airport", $"fleet", $"robot", $"task", $"status")
         )
 
-       
-
-        val ds = dfToKafka
+        val ds = failedToKafka
             .selectExpr("CAST(value AS STRING)")
             .writeStream
             .format("kafka")
@@ -80,11 +105,11 @@ object StreamHandler {
             .option("checkpointLocation", "/tmp/tunomeister/checkpoint")
             .start()
             
-        val query = dfToKafka
-            .writeStream
-            .outputMode("update")
-            .format("console")
-            .start()
+        // val query = overallStatusDF
+        //     .writeStream
+        //     .outputMode("complete")
+        //     .format("console")
+        //     .start()
         
         query.awaitTermination()
     }

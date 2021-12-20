@@ -1,2 +1,2 @@
 cd fleet_manager
-python3 mock_fleet.py
+python3 mock_fleet.py $1

@@ -2,7 +2,7 @@ from time import sleep, time
 from kafka import KafkaConsumer, KafkaProducer
 from mock_fleet_manager import Task
 
-import random
+import random, sys
 
 class bcolors:
     GREEN = '\033[92m'
@@ -18,6 +18,9 @@ consumer = KafkaConsumer(
 producer = KafkaProducer(
     bootstrap_servers='localhost:9092'
 )
+
+print(sys.argv[1], ": Mock fleet is running.")
+
 for msg in consumer:
     # Task is assigned.
     task_str = msg.value.decode("utf-8")
@@ -25,8 +28,8 @@ for msg in consumer:
     print(f"{bcolors.YELLOW}" + task.present() + f"{bcolors.ENDC}")
 
     # Task is processing...
-    wait_for = random.randint(1,9)/10
-    sleep(wait_for)
+    #wait_for = random.randint(10,30)/10
+    #sleep(wait_for)
     
     success = random.randint(0,10)
     if success == 0:
@@ -34,7 +37,7 @@ for msg in consumer:
     else:
         task.status = "done"
 
-    task.finishing_time = time()
+    task.finishing_time = (int(time()*1000)%100000)/100
 
     # Robot is sending a result to fleet manager.
 
